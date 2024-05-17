@@ -18,7 +18,7 @@ namespace NarcEngine
 		void Stop();
 
 	private:
-		GraphicsEngine* m_engine;
+		GraphicsEngine* m_graphicsEngine;
 	};
 
 	Application* CreateApplication();

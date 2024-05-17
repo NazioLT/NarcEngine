@@ -1,7 +1,6 @@
 #pragma once
 
-#define GLFW_INCLUDE_VULKAN
-#include <GLFW/glfw3.h>
+#include "Window.h"
 
 #include <iostream>
 #include <stdexcept>
@@ -27,10 +26,11 @@ namespace NarcEngine
 		void Update();
 		void Stop();
 
-		const inline bool ShouldClose() const { return m_windowShouldClose; }
+		const inline bool ShouldClose() const { return m_window.ShouldClose(); }
 
 	private:
-		GLFWwindow* m_window;
+		Window m_window;
+
 		VkInstance m_instance;
 		VkDebugUtilsMessengerEXT m_debugMessenger;
 		VkDevice m_device;
@@ -58,10 +58,7 @@ namespace NarcEngine
 		VkSemaphore m_renderFinishedSemaphore;
 		VkFence m_inFlightFence;
 
-		bool m_windowShouldClose = false;
-
 	private:
-		void InitWindow();
 		void InitVulkan();
 		void CleanUp();
 

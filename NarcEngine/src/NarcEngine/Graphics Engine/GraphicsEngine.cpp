@@ -20,9 +20,6 @@ namespace NarcEngine
 		std::vector<VkPresentModeKHR> PresentModes;
 	};
 
-	const uint32_t WIDTH = 800;
-	const uint32_t HEIGHT = 600;
-
 	const std::vector<const char*> ValidationLayers =
 	{
 		"VK_LAYER_KHRONOS_validation"
@@ -160,7 +157,7 @@ namespace NarcEngine
 		else
 		{
 			int width, height;
-			glfwGetFramebufferSize(m_window, &width, &height);
+			m_window.GetFrameBufferSize(&width, &height);
 
 			VkExtent2D actualExtent =
 			{
@@ -365,15 +362,13 @@ namespace NarcEngine
 
 	void GraphicsEngine::Start()
 	{
-		InitWindow();
+		m_window.Init();
 		InitVulkan();
 	}
 
 	void GraphicsEngine::Update()
 	{
-		m_windowShouldClose = glfwWindowShouldClose(m_window);
-
-		glfwPollEvents();
+		m_window.Update();
 		DrawFrame();
 	}
 
@@ -382,23 +377,17 @@ namespace NarcEngine
 		vkDeviceWaitIdle(m_device);
 
 		CleanUp();
-	}
 
-	void GraphicsEngine::InitWindow()
-	{
-		glfwInit();
-
-		glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-		glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
-
-		m_window = glfwCreateWindow(WIDTH, HEIGHT, "Narcoleptic Engine", nullptr, nullptr);
+		m_window.Stop();
 	}
 
 	void GraphicsEngine::InitVulkan()
 	{
 		CreateInstance();
 		SetupDebugMessenger();
-		CreateSurface();
+
+		m_window.CreateSurface(m_instance, &m_surface);
+
 		PickPhysicalDevice();
 		CreateLogicalDevice();
 		CreateSwapChain();
@@ -442,11 +431,6 @@ namespace NarcEngine
 
 		vkDestroySurfaceKHR(m_instance, m_surface, nullptr);
 		vkDestroyInstance(m_instance, nullptr);
-
-		glfwDestroyWindow(m_window);
-		glfwTerminate();
-
-		std::cin.get();
 	}
 
 	void GraphicsEngine::CreateInstance()
@@ -504,14 +488,6 @@ namespace NarcEngine
 		if (CreateDebugUtilsMessengerEXT(m_instance, &createInfo, nullptr, &m_debugMessenger) != VK_SUCCESS)
 		{
 			throw std::runtime_error("Failed to set up debug messenger!");
-		}
-	}
-
-	void GraphicsEngine::CreateSurface()
-	{
-		if (glfwCreateWindowSurface(m_instance, m_window, nullptr, &m_surface) != VK_SUCCESS)
-		{
-			throw std::runtime_error("failed to create window surface!");
 		}
 	}
 

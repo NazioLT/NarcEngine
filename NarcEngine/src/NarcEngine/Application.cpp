@@ -1,33 +1,34 @@
 #include "Application.h"
 
-#include "GraphicsEngine.h"
+#include "Graphics Engine/GraphicsEngine.h"
 
 namespace NarcEngine
 {
 	Application::Application()
 	{
-		m_engine = new GraphicsEngine();
+		m_graphicsEngine = new GraphicsEngine();
 	}
 
 	Application::~Application()
 	{
-		delete m_engine;
+		delete m_graphicsEngine;
 	}
 
 	void Application::Start()
 	{
-		m_engine->Start();
+		m_graphicsEngine->Start();
 	}
 
 	void Application::Run()
 	{
-		while (!m_engine->ShouldClose())
+		while (!m_graphicsEngine->ShouldClose())
 		{
-			m_engine->Update();
+			m_graphicsEngine->Update();
 		}
 	}
 	void Application::Stop()
 	{
-		m_engine->Stop();
+		m_graphicsEngine->Stop();
+		std::cin.get();
 	}
 }
