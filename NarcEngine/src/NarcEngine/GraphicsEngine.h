@@ -17,28 +17,17 @@
 
 namespace NarcEngine
 {
-	struct QueueFamilyIndices
-	{
-		std::optional<uint32_t> GraphicsFamily;
-		std::optional<uint32_t> PresentFamily;
+	struct QueueFamilyIndices;
+	struct SwapChainSupportDetails;
 
-		bool IsComplete()
-		{
-			return GraphicsFamily.has_value() && PresentFamily.has_value();
-		}
-	};
-
-	struct SwapChainSupportDetails 
-	{
-		VkSurfaceCapabilitiesKHR Capabilities;
-		std::vector<VkSurfaceFormatKHR> Formats;
-		std::vector<VkPresentModeKHR> PresentModes;
-	};
-
-	class Engine
+	class GraphicsEngine
 	{
 	public:
-		void Run();
+		void Start();
+		void Update();
+		void Stop();
+
+		const inline bool ShouldClose() const { return m_windowShouldClose; }
 
 	private:
 		GLFWwindow* m_window;
@@ -69,10 +58,11 @@ namespace NarcEngine
 		VkSemaphore m_renderFinishedSemaphore;
 		VkFence m_inFlightFence;
 
+		bool m_windowShouldClose = false;
+
 	private:
 		void InitWindow();
 		void InitVulkan();
-		void MainLoop();
 		void CleanUp();
 
 		void CreateInstance();

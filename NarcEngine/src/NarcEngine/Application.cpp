@@ -1,18 +1,33 @@
 #include "Application.h"
 
-#include "Engine.h"
+#include "GraphicsEngine.h"
 
-NarcEngine::Application::Application()
+namespace NarcEngine
 {
-}
+	Application::Application()
+	{
+		m_engine = new GraphicsEngine();
+	}
 
-NarcEngine::Application::~Application()
-{
-}
+	Application::~Application()
+	{
+		delete m_engine;
+	}
 
-void NarcEngine::Application::Run()
-{
-	Engine engine;
+	void Application::Start()
+	{
+		m_engine->Start();
+	}
 
-	engine.Run();
+	void Application::Run()
+	{
+		while (!m_engine->ShouldClose())
+		{
+			m_engine->Update();
+		}
+	}
+	void Application::Stop()
+	{
+		m_engine->Stop();
+	}
 }

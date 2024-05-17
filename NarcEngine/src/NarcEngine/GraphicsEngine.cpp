@@ -1,7 +1,25 @@
-#include "Engine.h"
+#include "GraphicsEngine.h"
 
 namespace NarcEngine
 {
+	struct QueueFamilyIndices
+	{
+		std::optional<uint32_t> GraphicsFamily;
+		std::optional<uint32_t> PresentFamily;
+
+		bool IsComplete()
+		{
+			return GraphicsFamily.has_value() && PresentFamily.has_value();
+		}
+	};
+
+	struct SwapChainSupportDetails
+	{
+		VkSurfaceCapabilitiesKHR Capabilities;
+		std::vector<VkSurfaceFormatKHR> Formats;
+		std::vector<VkPresentModeKHR> PresentModes;
+	};
+
 	const uint32_t WIDTH = 800;
 	const uint32_t HEIGHT = 600;
 
@@ -46,7 +64,7 @@ namespace NarcEngine
 		}
 	}
 
-	QueueFamilyIndices Engine::FindQueueFamilies(VkPhysicalDevice device)
+	QueueFamilyIndices GraphicsEngine::FindQueueFamilies(VkPhysicalDevice device)
 	{
 		QueueFamilyIndices indices;
 
@@ -80,7 +98,7 @@ namespace NarcEngine
 		return indices;
 	}
 
-	SwapChainSupportDetails Engine::QuerySwapChainSupport(VkPhysicalDevice device)
+	SwapChainSupportDetails GraphicsEngine::QuerySwapChainSupport(VkPhysicalDevice device)
 	{
 		SwapChainSupportDetails details;
 
@@ -107,7 +125,7 @@ namespace NarcEngine
 		return details;
 	}
 
-	VkSurfaceFormatKHR Engine::ChooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats)
+	VkSurfaceFormatKHR GraphicsEngine::ChooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats)
 	{
 		for (const auto& availableFormat : availableFormats)
 		{
@@ -120,7 +138,7 @@ namespace NarcEngine
 		return availableFormats[0];
 	}
 
-	VkPresentModeKHR Engine::ChooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes)
+	VkPresentModeKHR GraphicsEngine::ChooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes)
 	{
 		for (const auto& availablePresentMode : availablePresentModes)
 		{
@@ -133,7 +151,7 @@ namespace NarcEngine
 		return VK_PRESENT_MODE_FIFO_KHR;
 	}
 
-	VkExtent2D Engine::ChooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities)
+	VkExtent2D GraphicsEngine::ChooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities)
 	{
 		if (capabilities.currentExtent.width != std::numeric_limits<uint32_t>::max())
 		{
@@ -157,7 +175,7 @@ namespace NarcEngine
 		}
 	}
 
-	VkShaderModule Engine::CreateShaderModule(const std::vector<char>& code)
+	VkShaderModule GraphicsEngine::CreateShaderModule(const std::vector<char>& code)
 	{
 		VkShaderModuleCreateInfo createInfo{};
 		createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
@@ -173,7 +191,7 @@ namespace NarcEngine
 		return shaderModule;
 	}
 
-	void Engine::RecordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex)
+	void GraphicsEngine::RecordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex)
 	{
 		VkCommandBufferBeginInfo beginInfo{};
 		beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -223,7 +241,7 @@ namespace NarcEngine
 
 	}
 
-	bool Engine::CheckDeviceExtensionSupport(VkPhysicalDevice device)
+	bool GraphicsEngine::CheckDeviceExtensionSupport(VkPhysicalDevice device)
 	{
 		uint32_t extensionCount;
 		vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, nullptr);
@@ -240,7 +258,7 @@ namespace NarcEngine
 		return requiredExtensions.empty();
 	}
 
-	int Engine::RateDeviceSuitability(VkPhysicalDevice device)
+	int GraphicsEngine::RateDeviceSuitability(VkPhysicalDevice device)
 	{
 		VkPhysicalDeviceProperties deviceProperties;
 		VkPhysicalDeviceFeatures deviceFeatures;
@@ -293,7 +311,7 @@ namespace NarcEngine
 		return score;
 	}
 
-	void Engine::PopulateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo)
+	void GraphicsEngine::PopulateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo)
 	{
 		createInfo = {};
 		createInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
@@ -302,7 +320,7 @@ namespace NarcEngine
 		createInfo.pfnUserCallback = DebugCallback;
 	}
 
-	bool Engine::CheckValidationLayerSupport()
+	bool GraphicsEngine::CheckValidationLayerSupport()
 	{
 		uint32_t layerCount;
 		vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
@@ -329,7 +347,7 @@ namespace NarcEngine
 		return true;
 	}
 
-	std::vector<const char*> Engine::GetRequiredExtensions()
+	std::vector<const char*> GraphicsEngine::GetRequiredExtensions()
 	{
 		uint32_t glfwExtensionCount = 0;
 		const char** glfwExtensions;
@@ -345,15 +363,28 @@ namespace NarcEngine
 		return extensions;
 	}
 
-	void Engine::Run()
+	void GraphicsEngine::Start()
 	{
 		InitWindow();
 		InitVulkan();
-		MainLoop();
+	}
+
+	void GraphicsEngine::Update()
+	{
+		m_windowShouldClose = glfwWindowShouldClose(m_window);
+
+		glfwPollEvents();
+		DrawFrame();
+	}
+
+	void GraphicsEngine::Stop()
+	{
+		vkDeviceWaitIdle(m_device);
+
 		CleanUp();
 	}
 
-	void Engine::InitWindow()
+	void GraphicsEngine::InitWindow()
 	{
 		glfwInit();
 
@@ -363,7 +394,7 @@ namespace NarcEngine
 		m_window = glfwCreateWindow(WIDTH, HEIGHT, "Narcoleptic Engine", nullptr, nullptr);
 	}
 
-	void Engine::InitVulkan()
+	void GraphicsEngine::InitVulkan()
 	{
 		CreateInstance();
 		SetupDebugMessenger();
@@ -380,18 +411,7 @@ namespace NarcEngine
 		CreateSyncObjects();
 	}
 
-	void Engine::MainLoop()
-	{
-		while (!glfwWindowShouldClose(m_window))
-		{
-			glfwPollEvents();
-			DrawFrame();
-		}
-
-		vkDeviceWaitIdle(m_device);
-	}
-
-	void Engine::CleanUp()
+	void GraphicsEngine::CleanUp()
 	{
 		vkDestroySemaphore(m_device, m_imageAvailableSemaphore, nullptr);
 		vkDestroySemaphore(m_device, m_renderFinishedSemaphore, nullptr);
@@ -429,7 +449,7 @@ namespace NarcEngine
 		std::cin.get();
 	}
 
-	void Engine::CreateInstance()
+	void GraphicsEngine::CreateInstance()
 	{
 		if (EnableValidationLayers && !CheckValidationLayerSupport())
 		{
@@ -473,7 +493,7 @@ namespace NarcEngine
 		}
 	}
 
-	void Engine::SetupDebugMessenger()
+	void GraphicsEngine::SetupDebugMessenger()
 	{
 		if (!EnableValidationLayers)
 			return;
@@ -487,7 +507,7 @@ namespace NarcEngine
 		}
 	}
 
-	void Engine::CreateSurface()
+	void GraphicsEngine::CreateSurface()
 	{
 		if (glfwCreateWindowSurface(m_instance, m_window, nullptr, &m_surface) != VK_SUCCESS)
 		{
@@ -495,7 +515,7 @@ namespace NarcEngine
 		}
 	}
 
-	void Engine::PickPhysicalDevice()
+	void GraphicsEngine::PickPhysicalDevice()
 	{
 		uint32_t deviceCount = 0;
 		vkEnumeratePhysicalDevices(m_instance, &deviceCount, nullptr);
@@ -524,7 +544,7 @@ namespace NarcEngine
 		}
 	}
 
-	void Engine::CreateLogicalDevice()
+	void GraphicsEngine::CreateLogicalDevice()
 	{
 		QueueFamilyIndices indices = FindQueueFamilies(m_physicalDevice);
 
@@ -574,7 +594,7 @@ namespace NarcEngine
 		vkGetDeviceQueue(m_device, indices.PresentFamily.value(), 0, &m_presentQueue);
 	}
 
-	void Engine::CreateSwapChain()
+	void GraphicsEngine::CreateSwapChain()
 	{
 		SwapChainSupportDetails swapChainSupport = QuerySwapChainSupport(m_physicalDevice);
 		VkSurfaceFormatKHR surfaceFormat = ChooseSwapSurfaceFormat(swapChainSupport.Formats);
@@ -633,7 +653,7 @@ namespace NarcEngine
 		m_swapChainExtent = extent;
 	}
 
-	void Engine::CreateImageViews()
+	void GraphicsEngine::CreateImageViews()
 	{
 		m_swapChainImageViews.resize(m_swapChainImages.size());
 
@@ -664,7 +684,7 @@ namespace NarcEngine
 
 	}
 
-	void Engine::CreateRenderPass()
+	void GraphicsEngine::CreateRenderPass()
 	{
 		VkAttachmentDescription colorAttachment{};
 		colorAttachment.format = m_swapChainImageFormat;
@@ -710,7 +730,7 @@ namespace NarcEngine
 		}
 	}
 
-	void Engine::CreateGraphicsPipeline()
+	void GraphicsEngine::CreateGraphicsPipeline()
 	{
 		auto vertShaderCode = ReadFile("shaders/vert.spv");
 		auto fragShaderCode = ReadFile("shaders/frag.spv");
@@ -839,7 +859,7 @@ namespace NarcEngine
 		vkDestroyShaderModule(m_device, vertShaderModule, nullptr);
 	}
 
-	void Engine::CreateFramebuffers()
+	void GraphicsEngine::CreateFramebuffers()
 	{
 		m_swapChainFramebuffers.resize(m_swapChainImageViews.size());
 
@@ -867,7 +887,7 @@ namespace NarcEngine
 
 	}
 
-	void Engine::CreateCommandPool()
+	void GraphicsEngine::CreateCommandPool()
 	{
 		QueueFamilyIndices queueFamilyIndices = FindQueueFamilies(m_physicalDevice);
 
@@ -883,7 +903,7 @@ namespace NarcEngine
 
 	}
 
-	void Engine::CreateCommandBuffer()
+	void GraphicsEngine::CreateCommandBuffer()
 	{
 		VkCommandBufferAllocateInfo allocInfo{};
 		allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
@@ -897,7 +917,7 @@ namespace NarcEngine
 		}
 	}
 
-	void Engine::CreateSyncObjects()
+	void GraphicsEngine::CreateSyncObjects()
 	{
 		VkSemaphoreCreateInfo semaphoreInfo{};
 		semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
@@ -914,7 +934,7 @@ namespace NarcEngine
 		}
 	}
 
-	void Engine::DrawFrame()
+	void GraphicsEngine::DrawFrame()
 	{
 		vkWaitForFences(m_device, 1, &m_inFlightFence, VK_TRUE, UINT64_MAX);
 		vkResetFences(m_device, 1, &m_inFlightFence);
@@ -967,7 +987,7 @@ namespace NarcEngine
 		vkQueuePresentKHR(m_presentQueue, &presentInfo);
 	}
 
-	VKAPI_ATTR VkBool32 VKAPI_CALL Engine::DebugCallback(
+	VKAPI_ATTR VkBool32 VKAPI_CALL GraphicsEngine::DebugCallback(
 		VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
 		VkDebugUtilsMessageTypeFlagsEXT messageType,
 		const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
@@ -983,7 +1003,7 @@ namespace NarcEngine
 		return VK_FALSE;
 	}
 
-	std::vector<char> Engine::ReadFile(const std::string& filename)
+	std::vector<char> GraphicsEngine::ReadFile(const std::string& filename)
 	{
 		std::ifstream file(filename, std::ios::ate | std::ios::binary);
 

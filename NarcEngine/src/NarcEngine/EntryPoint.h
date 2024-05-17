@@ -12,16 +12,20 @@ int main(int argc, char** argv)
 
 	try
 	{
+		engine->Start();
 		engine->Run();
 	}
 	catch (const std::exception& e)
 	{
 		std::cerr << e.what() << std::endl;
 		std::cin.get();
+
+		engine->Stop();
 		delete engine;
 		return EXIT_FAILURE;
 	}
 
+	engine->Stop();
 	delete engine;
 	return EXIT_SUCCESS;
 }
